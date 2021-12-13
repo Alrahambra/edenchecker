@@ -1,0 +1,76 @@
+#!/usr/bin/env python
+import os
+import requests
+import json
+import textwrap
+try:
+    edenred_username = os.environ['EDENRED_USERNAME']
+    edenred_password = os.environ['EDENRED_PASSWORD']
+except KeyError:
+    print("Edenred username or password not provided!")
+
+login_payload = {
+    "username": edenred_username,
+    "password": edenred_password
+}
+login_payload = json.dumps(login_payload)
+#####################################################################
+
+def main():
+    headers = {"User-agent": "EdenChecker (CLI)",
+    "Content-Type": "application/json"}
+    e = requests.Session()
+    e.get("https://www.myedenred.fi/")
+    e.options("https://api.myedenred.fi/signin")
+    e.post("https://api.myedenred.fi/signin", data=login_payload, headers=headers)
+    wallet_data = e.get("https://api.myedenred.fi/users/me/cards/duo")
+    wallet_data_text = json.loads(wallet_data.text)
+    wallets = wallet_data_text['wallets']
+
+    translations = {
+        'en': {
+            'load_types': {
+                'main': 'Lunch benefit',
+                'wellness': 'Wellness benefit'
+            },
+            'states': {
+                'pending': 'Pending'
+            }
+        }
+    }
+
+    lang = 'en'
+
+    print("State of your Edenred card:\n============")
+    for wallet in wallets:
+        load_type = wallet['type']
+        load_state = wallet['myLoad']['requestStatus']
+        load_amount = str(wallet['myLoad']['value'] / 100) + '€'
+        load_date = wallet['myLoad']['nextLoadEndDate']
+        current_balance = str(wallet['balance'] / 100) + '€'
+        ## Translate, this needs better error handling
+        try:
+            load_type = translations[lang]['load_types'][load_type]
+        except:
+            pass
+        
+        try:
+            load_state = translations[lang]['states'][load_state]
+        except:
+            pass
+        ######
+        #Format balance information per 'card'
+        edenred_state = '''
+        Balance type: {load_type}
+        Balance now: {current_balance}
+        State of the top-up request?: {load_state}
+        Requested amount?: {load_amount}
+        Estimated date for the balance top-up?: {load_date}'''.format(load_type=load_type, current_balance=current_balance, load_state=load_state, load_amount=load_amount, load_date=load_date)
+        #Do 'dedent' operation
+        edenred_state = textwrap.dedent(edenred_state)
+        ######
+        print(edenred_state)
+        print('\n============')
+
+if __name__ == "__main__":
+    main()
