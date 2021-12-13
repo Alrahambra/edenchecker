@@ -11,6 +11,8 @@ To run this, you need two environment variables, which are:
 
 Remember to set the variables correctly in case your password has characters that break variables.
 
+After the variables are in place, you can run the utility from the command line.
+
 ## Compability
 
 This works at the moment, at least for the Edenred Duo -type cards. Compability with other cards, benefits and so on is fully unknown. It is also not known if this works with anything else than the Finnish Edenred Duo cards.
