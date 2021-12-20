@@ -43,34 +43,38 @@ def main():
 
     print("State of your Edenred card:\n============")
     for wallet in wallets:
-        load_type = wallet['type']
-        load_state = wallet['myLoad']['requestStatus']
-        load_amount = str(wallet['myLoad']['value'] / 100) + '€'
-        load_date = wallet['myLoad']['nextLoadEndDate']
-        current_balance = str(wallet['balance'] / 100) + '€'
-        ## Translate, this needs better error handling
-        try:
-            load_type = translations[lang]['load_types'][load_type]
-        except:
-            pass
-        
-        try:
-            load_state = translations[lang]['states'][load_state]
-        except:
-            pass
-        ######
-        #Format balance information per 'card'
-        edenred_state = '''
-        Balance type: {load_type}
-        Balance now: {current_balance}
-        State of the top-up request?: {load_state}
-        Requested amount?: {load_amount}
-        Estimated date for the balance top-up?: {load_date}'''.format(load_type=load_type, current_balance=current_balance, load_state=load_state, load_amount=load_amount, load_date=load_date)
-        #Do 'dedent' operation
-        edenred_state = textwrap.dedent(edenred_state)
-        ######
-        print(edenred_state)
-        print('\n============')
+        #Apparently handles some exceptional errors
+        if "0001-01-01T00:00:00" not in wallet['myLoad']['nextLoadEndDate']:
+            load_type = wallet['type']
+            load_state = wallet['myLoad']['requestStatus']
+            load_amount = str(wallet['myLoad']['value'] / 100) + '€'
+            load_date = wallet['myLoad']['nextLoadDate']
+            current_balance = str(wallet['balance'] / 100) + '€'
+            ## Translate, this needs better error handling
+            try:
+                load_type = translations[lang]['load_types'][load_type]
+            except:
+                pass
+            
+            try:
+                load_state = translations[lang]['states'][load_state]
+            except:
+                pass
+            ######
+            #Format balance information per 'card'
+            edenred_state = '''
+            Balance type: {load_type}
+            Balance now: {current_balance}
+            State of the top-up request?: {load_state}
+            Requested amount?: {load_amount}
+            Estimated date for the balance top-up?: {load_date}'''.format(load_type=load_type, current_balance=current_balance, load_state=load_state, load_amount=load_amount, load_date=load_date)
+            #Do 'dedent' operation
+            edenred_state = textwrap.dedent(edenred_state)
+            ######
+            print(edenred_state)
+            print('\n============')
+        else:
+            print("Error fetching data for a singular card.")
 
 if __name__ == "__main__":
     main()
