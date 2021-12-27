@@ -16,17 +16,8 @@ login_payload = {
 login_payload = json.dumps(login_payload)
 #####################################################################
 
-def main():
-    headers = {"User-agent": "EdenChecker (CLI)",
-    "Content-Type": "application/json"}
-    e = requests.Session()
-    e.get("https://www.myedenred.fi/")
-    e.options("https://api.myedenred.fi/signin")
-    e.post("https://api.myedenred.fi/signin", data=login_payload, headers=headers)
-    wallet_data = e.get("https://api.myedenred.fi/users/me/cards/duo")
-    wallet_data_text = json.loads(wallet_data.text)
-    wallets = wallet_data_text['wallets']
-
+def show_card(load_type, current_balance, load_state, load_amount, load_date):
+    ## Translate, this needs better error handling
     translations = {
         'en': {
             'load_types': {
@@ -41,40 +32,63 @@ def main():
 
     lang = 'en'
 
+    try:
+        load_type = translations[lang]['load_types'][load_type]
+    except:
+        pass
+    try:
+        load_state = translations[lang]['states'][load_state]
+    except:
+        pass
+    ######
+
+    #Format balance information per 'card'
+    edenred_state = '''
+    Balance type: {load_type}
+    Balance now: {current_balance}
+    State of the top-up request?: {load_state}
+    Requested amount?: {load_amount}
+    Estimated date for the balance top-up?: {load_date}'''.format(load_type=load_type, current_balance=current_balance, load_state=load_state, load_amount=load_amount, load_date=load_date)
+    #Do 'dedent' operation
+    edenred_state = textwrap.dedent(edenred_state)
+    print(edenred_state)
+    print('\n============')
+
+
+def main():
+    headers = {"User-agent": "EdenChecker (CLI)",
+    "Content-Type": "application/json"}
+    e = requests.Session()
+    e.get("https://www.myedenred.fi/")
+    e.options("https://api.myedenred.fi/signin")
+    e.post("https://api.myedenred.fi/signin", data=login_payload, headers=headers)
+    wallet_data = e.get("https://api.myedenred.fi/users/me/cards/duo")
+    wallet_data_text = json.loads(wallet_data.text)
+    wallets = wallet_data_text['wallets']
+
     print("State of your Edenred card:\n============")
     for wallet in wallets:
-        #Apparently handles some exceptional errors
-        if "0001-01-01T00:00:00" not in wallet['myLoad']['nextLoadEndDate']:
-            load_type = wallet['type']
+        #Has two types, main which is apparently lunch and wellness
+        load_type = wallet['type']
+        if load_type == 'main':
+            #Normal scenario, lunch
             load_state = wallet['myLoad']['requestStatus']
-            load_amount = str(wallet['myLoad']['value'] / 100) + '€'
+            load_amount = str(wallet['myLoad']['loadValue'] / 100) + '€'
             load_date = wallet['myLoad']['nextLoadDate']
             current_balance = str(wallet['balance'] / 100) + '€'
-            ## Translate, this needs better error handling
-            try:
-                load_type = translations[lang]['load_types'][load_type]
-            except:
-                pass
-            
-            try:
-                load_state = translations[lang]['states'][load_state]
-            except:
-                pass
-            ######
-            #Format balance information per 'card'
-            edenred_state = '''
-            Balance type: {load_type}
-            Balance now: {current_balance}
-            State of the top-up request?: {load_state}
-            Requested amount?: {load_amount}
-            Estimated date for the balance top-up?: {load_date}'''.format(load_type=load_type, current_balance=current_balance, load_state=load_state, load_amount=load_amount, load_date=load_date)
-            #Do 'dedent' operation
-            edenred_state = textwrap.dedent(edenred_state)
-            ######
-            print(edenred_state)
-            print('\n============')
-        else:
-            print("Error fetching data for a singular card.")
+            show_card(load_type, current_balance,load_state, load_amount, load_date)
+        if load_type == 'wellness':
+            #More complicated scenario based on educated guessing
+            current_balance = str(wallet['balance'] / 100) + '€'
+            available_topup = wallet['topUpAvailable']
+            if available_topup == False:
+                #Used up top-ups for rest of the year apparently!
+                #TODO: normal and pending states
+                load_amount = 'N/A'
+                load_state = 'N/A'
+                load_date = 'N/A'
+            show_card(load_type, current_balance,load_state, load_amount, load_date)
+
 
 if __name__ == "__main__":
     main()
