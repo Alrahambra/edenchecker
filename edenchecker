@@ -75,7 +75,7 @@ def main():
             #When top-up is available it's not possible for a request to exist
             available_topup = wallet['topUpAvailable']
             load_amount = str(wallet['myLoad']['loadValue'] / 100) + '€'
-            if available_topup == True and load_amount == 0:
+            if available_topup == True and load_amount == '0.0€':
                 load_state = "Not requested"
             else:
                 load_state = wallet['myLoad']['requestStatus']
