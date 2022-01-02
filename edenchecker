@@ -74,11 +74,11 @@ def main():
             #Normal scenario, lunch
             #When top-up is available it's not possible for a request to exist
             available_topup = wallet['topUpAvailable']
-            if available_topup == True:
+            load_amount = str(wallet['myLoad']['loadValue'] / 100) + '€'
+            if available_topup == True and load_amount == 0:
                 load_state = "Not requested"
             else:
                 load_state = wallet['myLoad']['requestStatus']
-            load_amount = str(wallet['myLoad']['loadValue'] / 100) + '€'
             load_date = wallet['myLoad']['nextLoadDate']
             current_balance = str(wallet['balance'] / 100) + '€'
             show_card(load_type, current_balance,load_state, load_amount, load_date)
