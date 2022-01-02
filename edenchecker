@@ -48,7 +48,7 @@ def show_card(load_type, current_balance, load_state, load_amount, load_date):
     Balance now: {current_balance}
     State of the top-up request?: {load_state}
     Requested amount?: {load_amount}
-    Estimated date for the balance top-up?: {load_date}'''.format(load_type=load_type, current_balance=current_balance, load_state=load_state, load_amount=load_amount, load_date=load_date)
+    Next possible load date/date of top-up: {load_date}'''.format(load_type=load_type, current_balance=current_balance, load_state=load_state, load_amount=load_amount, load_date=load_date)
     #Do 'dedent' operation
     edenred_state = textwrap.dedent(edenred_state)
     print(edenred_state)
@@ -72,7 +72,12 @@ def main():
         load_type = wallet['type']
         if load_type == 'main':
             #Normal scenario, lunch
-            load_state = wallet['myLoad']['requestStatus']
+            #When top-up is available it's not possible for a request to exist
+            available_topup = wallet['topUpAvailable']
+            if available_topup == True:
+                load_state = "Not requested"
+            else:
+                load_state = wallet['myLoad']['requestStatus']
             load_amount = str(wallet['myLoad']['loadValue'] / 100) + '€'
             load_date = wallet['myLoad']['nextLoadDate']
             current_balance = str(wallet['balance'] / 100) + '€'
